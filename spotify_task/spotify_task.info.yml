@@ -1,0 +1,7 @@
+name: "Spotify Task"
+type: module
+description: "Integrates with Spotify API to manage artists."
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:block
+package: Custom

@@ -1,0 +1,10 @@
+services:
+  spotify_task.spotify_api:
+    class: Drupal\spotify_task\SpotifyApiService
+    arguments:
+      [
+        "@config.factory",
+        "@http_client",
+        "@datetime.time",
+        "@logger.channel.system",
+      ]

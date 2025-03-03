@@ -1,0 +1,6 @@
+spotify_task.admin:
+  title: "Spotify Task"
+  route_name: spotify_task.admin
+  description: "Manage Spotify integration settings."
+  parent: system.admin_config_services
+  weight: 100

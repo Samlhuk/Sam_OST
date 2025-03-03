@@ -1,0 +1,8 @@
+administer spotify settings:
+  title: "Administer Spotify settings"
+  description: "Allows users to configure Spotify API settings and manage artists."
+  restrict access: true
+
+view spotify artists:
+  title: "View Spotify artists"
+  description: "Allows users to view the artist details page."

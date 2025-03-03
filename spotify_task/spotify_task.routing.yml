@@ -1,0 +1,15 @@
+spotify_task.admin:
+  path: "/admin/config/spotify-task"
+  defaults:
+    _form: '\Drupal\spotify_task\Form\SpotifyAdminForm'
+    _title: "Spotify Settings"
+  requirements:
+    _permission: "administer spotify settings"
+
+spotify_task.artist:
+  path: "/spotify/artist/{artist_id}"
+  defaults:
+    _controller: '\Drupal\spotify_task\Controller\SpotifyController::artistDetails'
+    _title_callback: '\Drupal\spotify_task\Controller\SpotifyController::getArtistTitle'
+  requirements:
+    _permission: "view spotify artists"
