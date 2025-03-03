@@ -68,6 +68,9 @@ class SpotifyAdminForm extends ConfigFormBase {
     // Load stored configuration.
     $config = $this->config('spotify_task.settings');
 
+    // ============================================================
+    // Field Group 1: Spotify API Credentials.
+    // ============================================================
     $form['api_credentials'] = [
       '#type' => 'details',
       '#title' => $this->t('Spotify API Credentials'),
@@ -102,6 +105,9 @@ class SpotifyAdminForm extends ConfigFormBase {
       '#suffix' => '</div>',
     ];
 
+    // ============================================================
+    // Field Group 2: Manage Spotify Artists.
+    // ============================================================
     $form['artist_management'] = [
       '#type' => 'details',
       '#title' => $this->t('Manage Spotify Artists'),
@@ -126,7 +132,6 @@ class SpotifyAdminForm extends ConfigFormBase {
       '#type' => 'markup',
       '#markup' => $form_state->get('artist_message') ? $form_state->get('artist_message') : '',
     ];
-
     $artists = $config->get('artists') ?: [];
     $header = [
       'artist_id' => $this->t('Artist ID'),
@@ -159,6 +164,38 @@ class SpotifyAdminForm extends ConfigFormBase {
       ];
     }
 
+    // ============================================================
+    // Field Group 3: Artist Access Settings.
+    // ============================================================
+    $form['access_settings'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Artist Access Settings'),
+      '#open' => TRUE,
+      '#tree' => TRUE,
+    ];
+    $form['access_settings']['open_access'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Allow any artist to be viewed'),
+      '#default_value' => $config->get('open_access') ? 1 : 0,
+      '#description' => $this->t('If checked, any artist ID can be accessed at spotify/artist/[artistID]. If not, only artists added via this form are accessible.'),
+    ];
+    $form['access_settings']['save_access_settings'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Save Access Settings'),
+      '#submit' => ['::saveAccessSettings'],
+      '#ajax' => [
+        'callback' => '::ajaxAccessSettingsCallback',
+        'wrapper' => 'access-settings-wrapper',
+      ],
+    ];
+    $form['access_settings']['access_settings_message'] = [
+      '#type' => 'markup',
+      '#markup' => $form_state->get('access_settings_message') ? $form_state->get('access_settings_message') : '',
+      '#prefix' => '<div id="access-settings-wrapper">',
+      '#suffix' => '</div>',
+    ];
+
+    // Remove the default configuration form save button.
     $form = parent::buildForm($form, $form_state);
     unset($form['actions']['submit']);
 
@@ -173,11 +210,13 @@ class SpotifyAdminForm extends ConfigFormBase {
     $client_id = $values['client_id'];
     $client_secret = $values['client_secret'];
 
+    // Save credentials in configuration.
     $this->configFactory->getEditable('spotify_task.settings')
       ->set('client_id', $client_id)
       ->set('client_secret', $client_secret)
       ->save();
 
+    // Use the service to ensure a valid access token.
     $access_token = $this->spotifyApi->ensureValidAccessToken();
     if ($access_token) {
       $message = $this->t('Access token generated successfully.');
@@ -209,6 +248,7 @@ class SpotifyAdminForm extends ConfigFormBase {
       return;
     }
 
+    // Use the service to fetch artist details.
     $artist_details = $this->spotifyApi->fetchArtistDetails($artist_id);
     if (!$artist_details || empty($artist_details['name'])) {
       $form_state->set('artist_message', $this->t('Invalid Artist ID or unable to fetch artist details.'));
@@ -218,15 +258,18 @@ class SpotifyAdminForm extends ConfigFormBase {
 
     $artist_name = $artist_details['name'];
 
+    // Retrieve the current artists list from configuration.
     $config = $this->config('spotify_task.settings');
     $artists = $config->get('artists') ?: [];
 
+    // Check if maximum allowed (20) is reached.
     if (count($artists) >= 20) {
       $form_state->set('artist_message', $this->t('You have reached the maximum number of artists allowed (20).'));
       $form_state->setRebuild();
       return;
     }
 
+    // Check if this artist is already added.
     foreach ($artists as $artist) {
       if ($artist['artist_id'] === $artist_id) {
         $form_state->set('artist_message', $this->t('Artist already added.'));
@@ -235,6 +278,7 @@ class SpotifyAdminForm extends ConfigFormBase {
       }
     }
 
+    // Add the new artist.
     $artists[] = [
       'artist_id' => $artist_id,
       'artist_name' => $artist_name,
@@ -278,6 +322,28 @@ class SpotifyAdminForm extends ConfigFormBase {
    */
   public function ajaxArtistCallback(array &$form, FormStateInterface $form_state) {
     return $form['artist_management']['artists'];
+  }
+
+  /**
+   * Submit handler to save the access settings.
+   */
+  public function saveAccessSettings(array &$form, FormStateInterface $form_state) {
+    $values = $form_state->getValue('access_settings');
+    $open_access = !empty($values['open_access']) ? 1 : 0;
+
+    $this->configFactory->getEditable('spotify_task.settings')
+      ->set('open_access', $open_access)
+      ->save();
+
+    $form_state->set('access_settings_message', $this->t('Access settings saved.'));
+    $form_state->setRebuild();
+  }
+
+  /**
+   * AJAX callback for access settings.
+   */
+  public function ajaxAccessSettingsCallback(array &$form, FormStateInterface $form_state) {
+    return $form['access_settings']['access_settings_message'];
   }
 
   /**
