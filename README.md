@@ -39,3 +39,24 @@ Demo can be seen at https://spotify.samlh.co.uk/
 Demo user details, 
 user: Test_Ac9a
 pass: Fpz}g5LL+5ie~;R
+
+
+
+Next Steps
+This module was built as a test in 2 hours and provides a form for adding artist IDs, a block which displays the artist name for those IDs and a page for each of those artists. 
+
+Some improvements which could be considered given more time include;
+A form for the block, such as which fields should be shown, Artist image, artist name etc. 
+A form for the artist page, so fields can be toggled on/off or re-arranged. 
+Better logging/debugging such as including if the API fails, client id and secret are missing or invalid.
+A way to throttle data, or manage data in case the API gets rate limited, such as saving data and fetching new data if available.
+A test file could also be provided. 
+
+
+An alternative approach which I looked at was using Drupals in built content types for each page and using manageable fields. 
+I created a demo at https://spotify-fields.samlh.co.uk, using 
+user: test_am7an 
+pass: KqCMm7GH":3gbH
+
+For this demo I created a module which creates a content type called Spotify Artist, which accepts the artist ID. All the fields are manageable fields which can be arranged or disabled under manage display for the content type. As this utilises Drupals core content type and core fields, it is compatible with modules such as views and layout builder, so blocks can be created of selected artists under views, and drupals inbuilt permissions can be used to control who can see the block/view. 
+A feature I did not include which I would have looked in to if given more time is to link the artists genres with taxonomy. 
