@@ -1,0 +1,7 @@
+name: "Spotify Fields"
+type: module
+description: 'Integrates with Spotify to provide custom fields for Spotify Artist nodes.'
+package: Custom
+core_version_requirement: ^11 || ^10
+dependencies:
+  - drupal:node

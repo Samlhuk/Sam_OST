@@ -1,0 +1,13 @@
+name: spotify_artist
+type: spotify_artist
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+label: "Spotify Artist"
+description: "A content type for Spotify Artists."
+help: ""
+new_revision: false
+display_submitted: false
+preview_mode: 1

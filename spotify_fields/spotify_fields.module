@@ -1,0 +1,36 @@
+<?php
+
+use Drupal\Core\Entity\EntityInterface;
+
+/**
+ * Implements hook_entity_presave().
+ *
+ * Before saving a Spotify Artist node, fetch data from the Spotify API and update
+ * the manageable fields (Artist Name, Artist Genres, Artist Followers).
+ */
+function spotify_fields_entity_presave(EntityInterface $entity) {
+  if ($entity->getEntityTypeId() === 'node' && $entity->bundle() === 'spotify_artist') {
+    $artist_id = $entity->get('field_spotify_artist_id')->value;
+    if ($artist_id) {
+      /** @var \Drupal\spotify_fields\Service\SpotifyApiService $spotify_api */
+      $spotify_api = \Drupal::service('spotify_fields.spotify_api');
+      $artist_data = $spotify_api->getArtistData($artist_id);
+
+      if (!empty($artist_data)) {
+        $entity->set('field_spotify_artist_name', $artist_data['name'] ?? '');
+
+        $genres = [];
+        if (!empty($artist_data['genres']) && is_array($artist_data['genres'])) {
+          foreach ($artist_data['genres'] as $genre) {
+            $genres[] = ['value' => $genre];
+          }
+        }
+        $entity->set('field_spotify_artist_genres', $genres);
+
+
+        $followers = isset($artist_data['followers']['total']) ? $artist_data['followers']['total'] : 0;
+        $entity->set('field_spotify_artist_followers', $followers);
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+spotify_fields.settings:
+  path: '/admin/config/services/spotify-fields'
+  defaults:
+    _form: '\Drupal\spotify_fields\Form\SpotifyFieldsSettingsForm'
+    _title: 'Spotify Fields Settings'
+  requirements:
+    _permission: 'administer site configuration'

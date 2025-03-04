@@ -1,0 +1,6 @@
+spotify_fields.settings:
+  title: 'Spotify Fields'
+  description: 'Configure the Spotify API credentials and settings for Spotify Fields.'
+  parent: system.admin_config_services
+  route_name: spotify_fields.settings
+  weight: 100

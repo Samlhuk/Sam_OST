@@ -1,0 +1,19 @@
+langcode: en
+status: true
+dependencies:
+  enforced:
+    module:
+      - spotify_fields
+id: node.field_spotify_artist_genres
+field_name: field_spotify_artist_genres
+entity_type: node
+type: string
+settings:
+  max_length: 512
+module: text
+locked: false
+cardinality: -1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

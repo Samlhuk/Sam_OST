@@ -1,0 +1,4 @@
+services:
+  spotify_fields.spotify_api:
+    class: Drupal\spotify_fields\Service\SpotifyApiService
+    arguments: ['@http_client', '@config.factory', '@cache.default']
