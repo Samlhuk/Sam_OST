@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  enforced:
+    module:
+      - spotify_fields
+id: node.field_spotify_artist_image
+field_name: field_spotify_artist_image
+entity_type: node
+type: image
+settings:
+  uri_scheme: public
+  default_image:
+    fid: 0
+module: image
+locked: false
+cardinality: 1
+translatable: false
