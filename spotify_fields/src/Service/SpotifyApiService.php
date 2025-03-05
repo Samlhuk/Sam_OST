@@ -111,4 +111,33 @@ class SpotifyApiService {
       return NULL;
     }
   }
+  public function searchArtists(string $query): ?array {
+  $access_token = $this->getAccessToken();
+  if (!$access_token) {
+    \Drupal::logger('spotify_fields')->error('No valid access token available for search.');
+    return NULL;
+  }
+  
+  try {
+    $response = $this->httpClient->request('GET', 'https://api.spotify.com/v1/search', [
+      'headers' => [
+        'Authorization' => 'Bearer ' . $access_token,
+      ],
+      'query' => [
+        'q' => $query,
+        'type' => 'artist',
+        'limit' => 10,
+      ],
+    ]);
+    $data = \Drupal\Component\Serialization\Json::decode($response->getBody()->getContents());
+    if (isset($data['artists']['items'])) {
+      return $data['artists']['items'];
+    }
+  }
+  catch (\Exception $e) {
+    \Drupal::logger('spotify_fields')->error('Error searching for artists: @message', ['@message' => $e->getMessage()]);
+  }
+  return NULL;
+}
+
 }
