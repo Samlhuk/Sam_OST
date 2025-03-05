@@ -1,14 +1,16 @@
 <?php
 
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\Core\Url;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\file\Entity\File;
+use Drupal\Core\File\FileSystemInterface;
 
 /**
  * Implements hook_entity_presave().
- *
- * Before saving a Spotify Artist node, fetch data from the Spotify API and update
- * the manageable fields (Artist Name, Artist Genres, Artist Followers).
  */
-function spotify_fields_entity_presave(EntityInterface $entity) {
+function spotify_fields_entity_presave(\Drupal\Core\Entity\EntityInterface $entity) {
   if ($entity->getEntityTypeId() === 'node' && $entity->bundle() === 'spotify_artist') {
     $artist_id = $entity->get('field_spotify_artist_id')->value;
     if ($artist_id) {
@@ -17,8 +19,10 @@ function spotify_fields_entity_presave(EntityInterface $entity) {
       $artist_data = $spotify_api->getArtistData($artist_id);
 
       if (!empty($artist_data)) {
+        // Update Artist Name.
         $entity->set('field_spotify_artist_name', $artist_data['name'] ?? '');
 
+        // Update Artist Genres.
         $genres = [];
         if (!empty($artist_data['genres']) && is_array($artist_data['genres'])) {
           foreach ($artist_data['genres'] as $genre) {
@@ -27,10 +31,88 @@ function spotify_fields_entity_presave(EntityInterface $entity) {
         }
         $entity->set('field_spotify_artist_genres', $genres);
 
-
+        // Update Artist Followers.
         $followers = isset($artist_data['followers']['total']) ? $artist_data['followers']['total'] : 0;
         $entity->set('field_spotify_artist_followers', $followers);
+
+        // Process Artist Image.
+if (!empty($artist_data['images'][0]['url'])) {
+  $image_url = $artist_data['images'][0]['url'];
+  try {
+    $client = \Drupal::httpClient();
+    $response = $client->get($image_url);
+    if ($response->getStatusCode() == 200) {
+      $image_data = $response->getBody()->getContents();
+      // Determine a filename from the image URL.
+      $filename = basename(parse_url($image_url, PHP_URL_PATH));
+      // Check if the filename has an extension. If not, append one based on the MIME type.
+      $extension = pathinfo($filename, PATHINFO_EXTENSION);
+      if (empty($extension)) {
+        $content_type = $response->getHeaderLine('content-type');
+        if (strpos($content_type, 'jpeg') !== FALSE) {
+          $filename .= '.jpg';
+        }
+        elseif (strpos($content_type, 'png') !== FALSE) {
+          $filename .= '.png';
+        }
+        else {
+          // Default fallback.
+          $filename .= '.jpg';
+        }
+      }
+      
+      // Prepare the destination directory.
+      $file_system = \Drupal::service('file_system');
+      $directory = 'public://spotify_artist_images';
+      if (!$file_system->prepareDirectory($directory, \Drupal\Core\File\FileSystemInterface::CREATE_DIRECTORY | \Drupal\Core\File\FileSystemInterface::MODIFY_PERMISSIONS)) {
+        \Drupal::logger('spotify_fields')->error('Could not prepare directory: %directory', ['%directory' => $directory]);
+        return;
+      }
+      
+      $destination = $directory . '/' . $filename;
+      $uri = $file_system->saveData($image_data, $destination, \Drupal\Core\File\FileSystemInterface::EXISTS_RENAME);
+      if ($uri) {
+        // Retrieve the MIME type.
+        $content_type = $response->getHeaderLine('content-type');
+        if (!$content_type) {
+          $content_type = \Drupal::service('file.mime_type.guesser')->guess($uri);
+        }
+        $file = \Drupal\file\Entity\File::create([
+          'uri' => $uri,
+          'status' => 1, // Permanent.
+          'filemime' => $content_type,
+        ]);
+        $file->save();
+        $entity->set('field_spotify_artist_image', [
+          'target_id' => $file->id(),
+          'alt' => $artist_data['name'] . ' image',
+        ]);
       }
     }
+  }
+  catch (\Exception $e) {
+    \Drupal::logger('spotify_fields')->error('Error downloading artist image: @message', [
+      '@message' => $e->getMessage(),
+    ]);
+  }
+}
+
+      }
+    }
+  }
+}
+
+
+/**
+ * Implements hook_form_FORM_ID_alter() for the Spotify Artist node form.
+ */
+function spotify_fields_form_node_spotify_artist_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  if (isset($form['field_spotify_artist_id']['widget'][0]['value'])) {
+    \Drupal::logger('spotify_fields')->notice('Altering node form for field_spotify_artist_id.');
+    $autocomplete_url = Url::fromRoute('spotify_fields.artist_autocomplete')->toString();
+    $form['field_spotify_artist_id']['widget'][0]['value']['#autocomplete_route_name'] = 'spotify_fields.artist_autocomplete';
+    // Use the Drupal-specific attribute name.
+    $form['field_spotify_artist_id']['widget'][0]['value']['#attributes']['data-drupal-autocomplete-path'] = $autocomplete_url;
+    $form['field_spotify_artist_id']['widget'][0]['value']['#attached']['library'][] = 'core/drupal.autocomplete';
   }
 }

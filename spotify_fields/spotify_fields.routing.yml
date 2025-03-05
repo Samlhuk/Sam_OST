@@ -5,3 +5,10 @@ spotify_fields.settings:
     _title: 'Spotify Fields Settings'
   requirements:
     _permission: 'administer site configuration'
+spotify_fields.artist_autocomplete:
+  path: '/spotify-fields/autocomplete/artist'
+  defaults:
+    _controller: '\Drupal\spotify_fields\Controller\SpotifyFieldsController::artistAutocomplete'
+    _title: 'Artist Autocomplete'
+  requirements:
+    _access: 'TRUE'

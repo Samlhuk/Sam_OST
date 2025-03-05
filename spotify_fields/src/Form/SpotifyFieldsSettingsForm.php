@@ -51,6 +51,7 @@ class SpotifyFieldsSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
+    // Optionally, add validation to test the credentials with Spotify's API.
     parent::validateForm($form, $form_state);
   }
 
