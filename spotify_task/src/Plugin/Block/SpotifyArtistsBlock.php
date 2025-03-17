@@ -99,4 +99,3 @@ class SpotifyArtistsBlock extends BlockBase implements ContainerFactoryPluginInt
   return ['#theme' => 'item_list', '#items' => $items];
 }
 
-}
